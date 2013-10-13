@@ -1,19 +1,26 @@
 # Description:
-#   Interaction with github.
+#   Layers D&D themed agile interactions on github and trello
 #
 # Commands:
+#   dm balance
+#   dm attack [TARGET] - Start an issue by number or class
+#   dm stats [TARGET] - Display the stats of a user or creature
+#   dm engage [TARGET] - Start progress on an issue
+#   dm (atk|attack) [TARGET] -
 #   hubot issues - List the issues
 #   hubot est - Display all open issues with estimates
+#   dm
 
 _      = require 'underscore'
 yaml_parser = require 'js-yaml'
 
 # TODO: use title to group issues
 # TODO: flag issues without an estimate
+#
 
-# https://trello.com/1/authorize?key=880bde7162f412901595af9c3a5e8a2a&name=gatabot&expiration=1day&response_type=token&scope=read,write
-trello = new (require 'node-trello') '', ''
-github = (require 'octonode').client ''
+# https://trello.com/1/authorize?key=3bbf777e98373409c9954efe73ed07fe&name=Dungeon Master&expiration=1day&response_type=token&scope=read,write
+trello = new (require 'node-trello') '3bbf777e98373409c9954efe73ed07fe', '3a83324b9117f089dcf1c2c5083485228a8f283a9658feb7f10664157882defe'
+github = (require 'octonode').client 'a11d770dc58417ff090dd83e3871edbc3702fec6'
 
 ghme   = github.me()
 ghrepo = github.repo 'amccausl/mongoose-dragon'
