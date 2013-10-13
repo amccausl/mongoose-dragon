@@ -16,7 +16,7 @@ trello = new (require 'node-trello') '', ''
 github = (require 'octonode').client ''
 
 ghme   = github.me()
-ghrepo = github.repo 'gatalabs/gataweb'
+ghrepo = github.repo 'amccausl/mongoose-dragon'
 
 yaml_regex = /---([^-]*)\.\.\./
 
