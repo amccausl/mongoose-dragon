@@ -2,9 +2,26 @@
 #   Layers D&D themed agile interactions on github and trello
 #
 # Commands:
-#   dm encounter ([NAME]) add [TARGET] - Add a target to an encounter (use name if given)
-#   dm encounter start
-#   dm encounter finish
+#   dm (epi|epic) - list all quests with status (list all the features with status)
+#   dm (que|quest) - view all quests (list all features)
+#   dm (que|quest) (o|open) <name> - view all unslain creatures in a quest <name> (view open tasks for a feature)
+#   dm (que|quest) (c|closed) <name> - view all slain creatures in a quest <name> (view closed tasks for a feature)
+#   dm (mil|milestone) - view all milestones 
+#   dm (mil|milestone) (inc|incomplete) - view incomplete milestones (view all past due milestones)
+#   dm (mil|milestone) (c|closed) - view complete milestones (view all closed milestones)
+#   dm (enc|encounter) - view all encounters (view all sprints)
+#   dm (enc|encounter) (inc|incomplete) - view incomplete encounters (view all past due sprint)
+#   dm (enc|encounter) (o|open) <name> - view all open creatures in an encounter <name> (view list of open tasks for sprint)
+#   dm (enc|encounter) (c|closed) <name>  - view all closed creatures in an encounter  <name> (view list of closed tasks for sprint)
+#   dm (enc|encounter) <name> - view all creatures for that encounter <name> (view all task from sprint)
+#   dm (enc|encounter) (s|start) <name> - start encounter with <name> (start a sprint with name)
+#   dm (enc|encounter) (f|finish) <name> - finish encounter with <name> (close a sprint with name)
+#   dm (enc|encounter) (a|add) <creature> <encounter name> - move creature <creature> from <encounter name> (move task from backlog to sprint)
+#   dm (enc|encounter) (r|remove) <creature> <encounter name> - remove creature <creature> from <encounter name> (remove task from backlog to sprint)
+#   dm (enc|encounter) (st|stats) <name> - view total creature hp and total party hp 
+#   dm (cre|creature) (eng|engage) <name> - player character engages creature (assign task to user)
+#   dm (cre|creature) (atk|attack) <name> <hit points> <damage done> - player character attacks creature <name> with <hit points> and describes <damage done> (add hours spent and comment to task)
+#   dm (cre|creature) (bl|bloodied) - view all bloodied creatures (view items marked for code review)
 #   dm (eng|engage) [TARGET] - Start progress on an issue
 #   dm (atk|attack) [TARGET] - Start an issue by number or class
 #   dm (dmg|damage) [TARGET] - Damage a creature
