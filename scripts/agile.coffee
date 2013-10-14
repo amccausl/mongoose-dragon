@@ -2,17 +2,20 @@
 #   Layers D&D themed agile interactions on github and trello
 #
 # Commands:
+#   dm encounter ([NAME]) add [TARGET] - Add a target to an encounter (use name if given)
+#   dm encounter start
+#   dm encounter finish
 #   dm (eng|engage) [TARGET] - Start progress on an issue
 #   dm (atk|attack) [TARGET] - Start an issue by number or class
 #   dm (dmg|damage) [TARGET] - Damage a creature
 #   dm (dispatch|slay) [TARGET] -
 #   dm finish []
-#   dm coup de grace - Finish a creature
+#   dm coup de grace - Finish him!
 #
 #   dm balance
 #   dm stats [TARGET] - Display the stats of a user or creature
 
-_      = require 'underscore'
+_ = require 'underscore'
 yaml_parser = require 'js-yaml'
 
 # TODO: use title to group issues
@@ -29,9 +32,31 @@ ghrepo = github.repo 'amccausl/mongoose-dragon'
 yaml_regex = /---([^-]*)\.\.\./
 
 module.exports = ( robot ) ->
+  robot.respond /engage/i, ( msg ) ->
+    msg.send 'engage triggered'
+
+  robot.respond /attack/i, ( msg ) ->
+    msg.send 'attack triggered'
+
+  robot.respond /damage/i, ( msg ) ->
+    msg.send 'damage triggered'
+
+  robot.respond /dispatch/i, ( msg ) ->
+    msg.send 'dispatch triggered'
+
+  robot.respond /finish/i, ( msg ) ->
+    msg.send 'finish triggered'
+
+  robot.respond /coup de grace/i, ( msg ) ->
+    msg.send 'coup de grace'
+
+  robot.respond /encounter/i, ( msg ) ->
+    msg.send 'encounter triggered'
+
   robot.respond /issues$/i, ( msg ) ->
     ghrepo.issues ( err, issues ) ->
       return msg.send 'error' if err
+      return msg.send 'No Issues' if ! issues
 
       for issue in issues
         parse = yaml_regex.exec issue.body
