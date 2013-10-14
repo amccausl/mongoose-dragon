@@ -120,10 +120,10 @@ module.exports = ( robot ) ->
   robot.respond /(cre|creature) (fl|flee) (.+)$/i, ( msg ) ->
     msg.send 'flee creature encounter (move task <name> to triage)' 
 
-  robot.respond /(cre|creature) (cdg|coupdegrace) (.+)$/i, ( msg ) ->
+  robot.respond /(cre|creature) (cdg|coup de grace) (.+)$/i, ( msg ) ->
     msg.send 'kill the creature (mark task <name> as closed)' 
 
-  robot.respond /(cre|creature) (cl|combatlog) (.+)$/i, ( msg ) ->
+  robot.respond /(cre|creature) (cl|combat log) (.+)$/i, ( msg ) ->
     msg.send 'view creature combat log (view task <name> comments)' 
 
   robot.respond /(par|party)$/i, ( msg ) ->
