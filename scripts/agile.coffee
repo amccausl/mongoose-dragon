@@ -95,6 +95,12 @@ module.exports = ( robot ) ->
 
   robot.respond /(mil|milestone)$/i, ( msg ) ->
     msg.send 'view all milestones'
+    ghrepo.milestones ( err, milestones ) ->
+      return msg.send 'error' if err
+      console.info('milestones', milestones)
+      milestoneList = {}
+      for milestone in milestones
+        msg.send "\##{ milestone.number } #{ milestone.title }:\n#{ milestone.description ? '' }"
 
   robot.respond /(mil|milestone) (inc|incomplete)$/i, ( msg ) ->
     msg.send 'view incomplete milestones (view all past due milestones)'
