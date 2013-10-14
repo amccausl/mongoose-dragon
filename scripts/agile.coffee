@@ -6,7 +6,7 @@
 #   dm (que|quest) - view all quests (list all features)
 #   dm (que|quest) (o|open) <name> - view all unslain creatures in a quest (view open tasks for a feature <name>)
 #   dm (que|quest) (c|closed) <name> - view all slain creatures in a quest (view closed tasks for a feature <name>)
-#   dm (mil|milestone) - view all milestones 
+#   dm (mil|milestone) - view all milestones
 #   dm (mil|milestone) (inc|incomplete) - view incomplete milestones (view all past due milestones)
 #   dm (mil|milestone) (c|closed) - view complete milestones (view all closed milestones)
 #   dm (enc|encounter) - view all encounters (view all sprints)
@@ -18,7 +18,7 @@
 #   dm (enc|encounter) (f|finish) <name> - finish named encounter (close a sprint <name>)
 #   dm (enc|encounter) (a|add) <creature> <encounter name> - move creature from encounter (move task <creature>  from backlog to sprint <encounter name>)
 #   dm (enc|encounter) (r|remove) <creature> <encounter name> - remove creature from (remove task <creature> from backlog to sprint <encounter name>)
-#   dm (enc|encounter) (st|stats) <name> - view total creature hp and total party hp 
+#   dm (enc|encounter) (st|stats) <name> - view total creature hp and total party hp
 #   dm (cre|creature) (eng|engage) <name> - player character engages creature (assign task to user)
 #   dm (cre|creature) (atk|attack) <name> <hit points> <damage done> - player character attacks creature with hit point and damage (add hours spent <hit points> and comment<damage done> to task <name>)
 #   dm (cre|creature) (atk|attack) (crit|critical) <name> <damage done> - player character attacks creature critical hit and describes (add comment<damage done> and label code-review to task <name>)
@@ -29,10 +29,17 @@
 #   dm (cre|creature) (cdg|coupdegrace) <name> - kill the creature (mark task <name> as closed)
 #   dm (cre|creature) (cl|combatlog) <name> - view creature combat log (view task <name> comments)
 #   dm (par|party) - view party information
-#   dm (par|party) <name> - view stats for party member <name> 
+#   dm (par|party) <name> - view stats for party member <name>
 
 _ = require 'underscore'
 yaml_parser = require 'js-yaml'
+
+label =
+  FEATURE: 'dm: feature'
+
+state =
+  OPEN:   'open'
+  CLOSED: 'closed'
 
 # TODO: use title to group issues
 # TODO: flag issues without an estimate
@@ -47,93 +54,126 @@ ghrepo = github.repo 'amccausl/mongoose-dragon'
 
 yaml_regex = /---([^-]*)\.\.\./
 
+parseYaml = ( issue ) ->
+  meta = {}
+  parse = yaml_regex.exec issue.body
+  if parse
+    for key, value of yaml_parser.safeLoad parse[ 1 ]
+      key = key.toLowerCase().replace( /\ /g, '_' )
+      meta[ key ] = value
+
+  return meta
+
+renderIssues = ( issues, msg ) ->
+  return msg.send 'No Issues' if ! issues
+  for issue in issues
+    renderIssue issue, msg
+
+renderIssue = ( issue, msg ) ->
+  console.info parseYaml issue
+  msg.send "\##{ issue.number } #{ issue.title }:\n#{ issue.body }"
+
 module.exports = ( robot ) ->
   robot.respond /epi|epic/i, ( msg ) ->
     msg.send 'list all quests with status (list all the features with status)'
 
   robot.respond /(que|quest)$/i, ( msg ) ->
     msg.send 'view all quests (list all features)'
+    ghrepo.issues null, null, { labels: label.FEATURE }, ( err, issues ) ->
+      return msg.send 'error' if err
+      renderIssues issues, msg
 
   robot.respond /(que|quest) (o|open) (.+)$/i, ( msg ) ->
-    msg.send 'view all unslain creatures in a quest (view open tasks for a feature <name>)'
+    msg.send "view all unslain creatures in a quest (view open tasks for a feature #{ msg.match[ 3 ] })"
+    # by 'feature' label in github'
 
   robot.respond /(que|quest) (c|closed) (.+)$/i, ( msg ) ->
     msg.send 'view all unslain creatures in a quest (view closed tasks for a feature <name>)'
+    ghrepo.issues null, null, { labels: label.FEATURE, state: state.CLOSED }, ( err, issues ) ->
+      return msg.send 'error' if err
+      renderIssues issues, msg
 
   robot.respond /(mil|milestone)$/i, ( msg ) ->
     msg.send 'view all milestones'
 
   robot.respond /(mil|milestone) (inc|incomplete)$/i, ( msg ) ->
-    msg.send 'view incomplete milestones (view all past due milestones)'    
+    msg.send 'view incomplete milestones (view all past due milestones)'
 
   robot.respond /(mil|milestone) (c|closed)$/i, ( msg ) ->
-    msg.send 'view complete milestones (view all closed milestones)'    
+    msg.send 'view complete milestones (view all closed milestones)'
 
   robot.respond /(enc|encounter)$/i, ( msg ) ->
-    msg.send 'view all encounters (view all sprints)'   
+    msg.send 'view all encounters (view all sprints)'
 
   robot.respond /(enc|encounter) (inc|incomplete)$/i, ( msg ) ->
-    msg.send 'view incomplete encounters (view all past due sprint)'   
+    msg.send 'view incomplete encounters (view all past due sprint)'
 
   robot.respond /(enc|encounter) (o|open) (.+)$/i, ( msg ) ->
-    msg.send 'view all open creatures in an encounter (view list of open tasks for sprint <name>)'   
+    msg.send "view all open creatures in an encounter (view list of open tasks for sprint #{ msg.match[ 3 ] })"
 
   robot.respond /(enc|encounter) (c|closed) (.+)$/i, ( msg ) ->
-    msg.send 'view all closed creatures in an encounter (view list of closed tasks for sprint <name>)'   
+    msg.send 'view all closed creatures in an encounter (view list of closed tasks for sprint <name>)'
 
   robot.respond /(enc|encounter) (cr|creatures) (.+)$/i, ( msg ) ->
-    msg.send 'view all creatures for that encounter (view all task from sprint <name>)'   
+    msg.send 'view all creatures for that encounter (view all task from sprint <name>)'
 
   robot.respond /(enc|encounter) (s|start) (.+)$/i, ( msg ) ->
-    msg.send 'start named encounter (start a sprint <name>)' 
+    msg.send 'start named encounter (start a sprint <name>)'
 
   robot.respond /(enc|encounter) (f|finish) (.+)$/i, ( msg ) ->
-    msg.send 'finish named encounter (close a sprint <name>)' 
+    msg.send 'finish named encounter (close a sprint <name>)'
 
   robot.respond /(enc|encounter) (a|add) (.+) (.+)$/i, ( msg ) ->
-    msg.send 'move creature from encounter (move task <creature>  from backlog to sprint <encounter name>)' 
+    msg.send 'move creature from encounter (move task <creature>  from backlog to sprint <encounter name>)'
 
   robot.respond /(enc|encounter) (r|remove) (.+) (.+)$/i, ( msg ) ->
-    msg.send 'remove creature from (remove task <creature> from backlog to sprint <encounter name>)' 
+    msg.send 'remove creature from (remove task <creature> from backlog to sprint <encounter name>)'
 
   robot.respond /(enc|encounter) (st|stats) (.+)$/i, ( msg ) ->
-    msg.send 'view total creature hp and total party hp' 
+    msg.send 'view total creature hp and total party hp'
 
   robot.respond /(cre|creature) (eng|engage) (.+)$/i, ( msg ) ->
-    msg.send 'player character engages creature (assign task to user)' 
+    msg.send 'player character engages creature (assign task to user)'
 
   robot.respond /(cre|creature) (atk|attack) (.+) (.+) (.+)$/i, ( msg ) ->
-    msg.send 'player character attacks creature with hit point and damage (add hours spent <hit points> and comment<damage done> to task <name>)' 
+    msg.send 'player character attacks creature with hit point and damage (add hours spent <hit points> and comment<damage done> to task <name>)'
 
   robot.respond /(cre|creature) (atk|attack) (crit|critical) (.+) (.+)$/i, ( msg ) ->
-    msg.send 'player character attacks creature critical hit and describes (add comment<damage done> and label code-review to task <name>)' 
+    msg.send 'player character attacks creature critical hit and describes (add comment<damage done> and label code-review to task <name>)'
 
   robot.respond /(cre|creature) (bl|bloodied)$/i, ( msg ) ->
-    msg.send 'view all bloodied creatures (view items marked for code review)' 
+    msg.send 'view all bloodied creatures (view items marked for code review)'
 
   robot.respond /(cre|creature) (un|unconscious) (.+)$/i, ( msg ) ->
-    msg.send 'creature is unconscious (label task <name> for testing)' 
+    msg.send 'creature is unconscious (label task <name> for testing)'
 
   robot.respond /(cre|creature) (re|revive) (.+)$/i, ( msg ) ->
-    msg.send 'revive creature (task <name> failed code review or testing)' 
+    msg.send 'revive creature (task <name> failed code review or testing)'
 
   robot.respond /(cre|creature) (fl|flee) (.+)$/i, ( msg ) ->
-    msg.send 'flee creature encounter (move task <name> to triage)' 
+    msg.send 'flee creature encounter (move task <name> to triage)'
 
   robot.respond /(cre|creature) (cdg|coup de grace) (.+)$/i, ( msg ) ->
-    msg.send 'kill the creature (mark task <name> as closed)' 
+    msg.send 'kill the creature (mark task <name> as closed)'
 
   robot.respond /(cre|creature) (cl|combat log) (.+)$/i, ( msg ) ->
-    msg.send 'view creature combat log (view task <name> comments)' 
+    msg.send 'view creature combat log (view task <name> comments)'
 
   robot.respond /(par|party)$/i, ( msg ) ->
     msg.send 'view party information'
+    # /repos/:repo/contributors
+    # if in encounter, display combat
+    ghrepo.contributors ( err, contributors ) ->
+      return msg.send 'error' if err
+
+      for contributor in contributors
+        console.info contributor
 
   robot.respond /(par|party) (.+)$/i, ( msg ) ->
-    msg.send 'view stats for party member <name> '
+    msg.send 'view stats for party member <name>'
 
   robot.respond /issues$/i, ( msg ) ->
-    ghrepo.issues ( err, issues ) ->
+    ghrepo.issues null, null, { labels: 'failed' }, ( err, issues ) ->
       return msg.send 'error' if err
       return msg.send 'No Issues' if ! issues
 

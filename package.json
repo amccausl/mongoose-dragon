@@ -20,9 +20,10 @@
 , "dependencies":
   { "hubot":         ">= 2.6.0 < 3.0.0"
   , "hubot-scripts": ">= 2.5.0 < 3.0.0"
+  , "hubot-gtalk":   "git://github.com/atmos/hubot-gtalk.git#master"
   , "js-yaml":       "~2.1.2"
   , "node-trello":   "~0.1.4"
-  , "octonode":      "~0.3.5"
+  , "octonode":      "git://github.com/amccausl/octonode.git#master"
   , "underscore":    "~1.4.4"
   }
 , "engines":
