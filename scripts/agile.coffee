@@ -26,6 +26,7 @@
 #   dm (cre|creature) (un|unconscious) <name> - creature is unconscious (label task <name> for testing)
 #   dm (cre|creature) (re|revive) <name> - revive creature (task <name> failed code review or testing)
 #   dm (cre|creature) (fl|flee) <name> - flee creature encounter (move task <name> to triage)
+#   dm (cre|creature) (cdg|coupdegrace) <name> - kill the creature (mark task <name> as closed)
 #   dm (cre|creature) (cl|combatlog) <name> - view creature combat log (view task <name> comments)
 #   dm (par|party) - view party information
 #   dm (par|party) <name> - view stats for party member <name> 
@@ -118,6 +119,9 @@ module.exports = ( robot ) ->
 
   robot.respond /(cre|creature) (fl|flee) (.+)$/i, ( msg ) ->
     msg.send 'flee creature encounter (move task <name> to triage)' 
+
+  robot.respond /(cre|creature) (cdg|coupdegrace) (.+)$/i, ( msg ) ->
+    msg.send 'kill the creature (mark task <name> as closed)' 
 
   robot.respond /(cre|creature) (cl|combatlog) (.+)$/i, ( msg ) ->
     msg.send 'view creature combat log (view task <name> comments)' 
