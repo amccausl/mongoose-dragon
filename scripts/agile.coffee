@@ -31,6 +31,8 @@
 #   dm (par|party) - view party information
 #   dm (par|party) <name> - view stats for party member <name> 
 
+# This is a test for issue linking (Issue #3)
+
 _ = require 'underscore'
 yaml_parser = require 'js-yaml'
 
