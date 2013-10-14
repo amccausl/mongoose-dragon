@@ -2,14 +2,15 @@
 #   Layers D&D themed agile interactions on github and trello
 #
 # Commands:
+#   dm (eng|engage) [TARGET] - Start progress on an issue
+#   dm (atk|attack) [TARGET] - Start an issue by number or class
+#   dm (dmg|damage) [TARGET] - Damage a creature
+#   dm (dispatch|slay) [TARGET] -
+#   dm finish []
+#   dm coup de grace - Finish a creature
+#
 #   dm balance
-#   dm attack [TARGET] - Start an issue by number or class
 #   dm stats [TARGET] - Display the stats of a user or creature
-#   dm engage [TARGET] - Start progress on an issue
-#   dm (atk|attack) [TARGET] -
-#   hubot issues - List the issues
-#   hubot est - Display all open issues with estimates
-#   dm
 
 _      = require 'underscore'
 yaml_parser = require 'js-yaml'
