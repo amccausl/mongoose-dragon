@@ -224,7 +224,7 @@ module.exports = ( robot ) ->
 
             section = undefined
             for issue in ( _.sortBy issues, ( issue ) -> issue.title )
-              is_testing = ! _.isEmpty _.findWhere issue.labels, { name: 'status: testing' }
+              is_testing = ! _.isEmpty _.findWhere issue.labels, { name: 'status: test' }
               is_review  = ! _.isEmpty _.findWhere issue.labels, { name: 'status: review' }
 
               if issue.state == state.OPEN
