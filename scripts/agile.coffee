@@ -34,6 +34,9 @@
 _ = require 'underscore'
 yaml_parser = require 'js-yaml'
 
+github_key = process.env.GITHUB_KEY
+github_repo = process.env.GITHUB_REPO
+
 label =
   FEATURE: 'dm: feature'
 
@@ -47,10 +50,10 @@ state =
 
 # https://trello.com/1/authorize?key=3bbf777e98373409c9954efe73ed07fe&name=Dungeon Master&expiration=1day&response_type=token&scope=read,write
 trello = new (require 'node-trello') '3bbf777e98373409c9954efe73ed07fe', '3a83324b9117f089dcf1c2c5083485228a8f283a9658feb7f10664157882defe'
-github = (require 'octonode').client 'a11d770dc58417ff090dd83e3871edbc3702fec6'
+github = (require 'octonode').client github_key
 
 ghme   = github.me()
-ghrepo = github.repo 'amccausl/mongoose-dragon'
+ghrepo = github.repo github_repo
 
 yaml_regex = /---([^-]*)\.\.\./
 
@@ -70,8 +73,7 @@ renderIssues = ( issues, msg ) ->
     renderIssue issue, msg
 
 renderIssue = ( issue, msg ) ->
-  console.info parseYaml issue
-  msg.send "\##{ issue.number } #{ issue.title }:\n#{ issue.body }"
+  msg.send "\##{ issue.number } #{ issue.title }:\n#{ issue.body } #{ issue.assignee?.login }"
 
 module.exports = ( robot ) ->
   robot.respond /epi|epic/i, ( msg ) ->
@@ -97,7 +99,6 @@ module.exports = ( robot ) ->
     msg.send 'view all milestones'
     ghrepo.milestones ( err, milestones ) ->
       return msg.send 'error' if err
-      console.info('milestones', milestones)
       milestoneList = {}
       for milestone in milestones
         msg.send "\##{ milestone.number } #{ milestone.title }:\n#{ milestone.description ? '' }"
@@ -172,49 +173,120 @@ module.exports = ( robot ) ->
     ghrepo.contributors ( err, contributors ) ->
       return msg.send 'error' if err
 
-      for contributor in contributors
-        console.info contributor
-
   robot.respond /(par|party) (.+)$/i, ( msg ) ->
     msg.send 'view stats for party member <name>'
 
-  robot.respond /issues$/i, ( msg ) ->
-    ghrepo.issues null, null, { labels: 'failed' }, ( err, issues ) ->
-      return msg.send 'error' if err
-      return msg.send 'No Issues' if ! issues
+  robot.respond /issues/i, ( msg ) ->
+    args = msg.message.text.split(/[ ]+/)
+    args.shift()
+    args.shift()
 
-      for issue in issues
-        parse = yaml_regex.exec issue.body
-        if parse
-          for key, value of ( yaml_parser.safeLoad parse[ 1 ] )
-            issue[ key.toLowerCase() ] = value
+    milestone_title = args.shift()
 
-      sum = 0
+    ghrepo.milestones ( err, milestones ) ->
 
-      for milestone, issues of ( _.groupBy issues, ( issue ) -> issue.milestone?.title )
-        msg.send milestone ? 'No Milestone'
-        milestone_sum = 0
+      milestone = _.findWhere milestones, title: milestone_title
 
-        section = undefined
-        for issue in ( _.sortBy issues, ( issue ) -> issue.title )
-          estimate = issue.estimate || issue.estimation || ''
-          milestone_sum += parseFloat estimate || 0
+      issue_query =
+        'page': 1
+        'per_page': 100
 
-          segments = issue.title.split ': '
-          if segments.length > 1
-            new_section = segments.shift()
-            title = segments.join ': '
+      if milestone
+        issue_query.milestone = milestone.number
 
-            if new_section != section
-              msg.send "  #{ new_section }:"
-              section = new_section
-            msg.send "    \##{ issue.number } #{ title } [#{ estimate }]"
+      ghrepo.issues issue_query, ( err, issues ) ->
+        if err
+          console.error 'issues error', err
+          return msg.send 'error'
+        return msg.send 'No Issues' if ! issues
 
-          else
-            msg.send "  \##{ issue.number } #{ issue.title } [#{ estimate }]"
+        try
+          msg.send (new Date()).toISOString()
 
-        msg.send "  Total: #{ milestone_sum }d"
-        sum += milestone_sum
+          for issue in issues
+            # if issue.state == state.CLOSED
+
+            try
+              parse = yaml_regex.exec issue.body
+              if parse
+                for key, value of ( yaml_parser.safeLoad parse[ 1 ] )
+                  issue[ key.toLowerCase() ] = value
+
+            catch ex
+              msg.send "Problem parsing issue ##{ issue.number }"
+
+          assignee_sums = {}
+          sum = 0
+
+          for milestone, issues of ( _.groupBy issues, ( issue ) -> issue.milestone?.title )
+            msg.send milestone ? 'No Milestone'
+            milestone_sum = 0
+
+            section = undefined
+            for issue in ( _.sortBy issues, ( issue ) -> issue.title )
+              is_testing = ! _.isEmpty _.findWhere issue.labels, { name: 'status: testing' }
+              is_review  = ! _.isEmpty _.findWhere issue.labels, { name: 'status: review' }
+
+              if issue.state == state.OPEN
+                estimate_string = issue.estimate || issue.estimation || ''
+                estimate =
+                  week: 0
+                  day: 0
+                  hour: 0
+                  minute: 0
+                if -1 != estimate_string.indexOf 'w'
+                  estimate.week = parseFloat estimate_string || 0
+                  estimate_string = estimate_string.substr( 1 + estimate_string.indexOf 'w' )
+                if -1 != estimate_string.indexOf 'd'
+                  estimate.day = parseFloat estimate_string || 0
+                  estimate_string = estimate_string.substr( 1 + estimate_string.indexOf 'd' )
+                if -1 != estimate_string.indexOf 'h'
+                  estimate.hour = parseFloat estimate_string || 0
+                  estimate_string = estimate_string.substr( 1 + estimate_string.indexOf 'h' )
+                if -1 != estimate_string.indexOf 'm'
+                  estimate.minute = parseFloat estimate_string || 0
+                  estimate_string = estimate_string.substr( 1 + estimate_string.indexOf 'm' )
+
+                estimate = 8 * ( 7 * estimate.week + estimate.day ) + estimate.hour + ( estimate.minute / 60 )
+
+                if is_testing
+                  estimate /= 4
+                else if is_review
+                  estimate /= 2
+
+                milestone_sum += estimate
+                assignee_sums[ issue.assignee?.login ? 'unallocated' ] ?= 0
+                assignee_sums[ issue.assignee?.login ? 'unallocated' ] += estimate
+                estimate = "#{ estimate }h"
+              else
+                estimate = 'DONE'
+
+              state_text =
+                if is_testing then '*TEST* '
+                else if is_review then '*REVIEW* '
+                else ''
+
+              segments = issue.title.split ': '
+              if segments.length > 1
+                new_section = segments.shift()
+                title = segments.join ': '
+
+                if new_section != section
+                  msg.send "  #{ new_section }:"
+                  section = new_section
+                msg.send "    #{ state_text }#{ title } (\##{ issue.number }) [#{ estimate }] #{ issue.assignee?.login }"
+
+              else
+                msg.send "  #{ state_text }#{ issue.title } (\##{ issue.number }) [#{ estimate }] #{ issue.assignee?.login }"
+
+            msg.send "  Total: #{ milestone_sum }h (#{ milestone_sum / 8 }d)"
+            for login, estimate_sum of assignee_sums
+              msg.send "    #{ login }: #{ estimate_sum }h"
+            sum += milestone_sum
+
+        catch ex
+          console.error 'exception', ex
+          msg.send "Fatal Error"
 
       ###
       for issue in issues
