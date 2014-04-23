@@ -7,6 +7,9 @@
   , "campfire"
   , "bot"
   ]
+, "scripts":
+  { "start": "./bin/hubot -n dm"
+  }
 , "description": "A simple helpful robot for your Company"
 , "licenses":
   [ { "type": "MIT"
@@ -23,7 +26,7 @@
   , "hubot-gtalk":   "git://github.com/atmos/hubot-gtalk.git#master"
   , "js-yaml":       "~2.1.2"
   , "node-trello":   "~0.1.4"
-  , "octonode":      "git://github.com/amccausl/octonode.git#master"
+  , "octonode":      "~0.6.2"
   , "underscore":    "~1.4.4"
   }
 , "engines":
