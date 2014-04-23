@@ -215,7 +215,7 @@ module.exports = ( robot ) ->
             catch ex
               msg.send "Problem parsing issue ##{ issue.number }"
 
-          assignee_sums = {}
+          assignees = {}
           sum = 0
 
           for milestone, issues of ( _.groupBy issues, ( issue ) -> issue.milestone?.title )
@@ -255,8 +255,11 @@ module.exports = ( robot ) ->
                   estimate /= 2
 
                 milestone_sum += estimate
-                assignee_sums[ issue.assignee?.login ? 'unallocated' ] ?= 0
-                assignee_sums[ issue.assignee?.login ? 'unallocated' ] += estimate
+                assignees[ issue.assignee?.login ? 'unallocated' ] ?=
+                  count: 0
+                  sum: 0
+                assignees[ issue.assignee?.login ? 'unallocated' ].count++
+                assignees[ issue.assignee?.login ? 'unallocated' ].sum += estimate
                 estimate = "#{ estimate }h"
               else
                 estimate = 'DONE'
@@ -280,8 +283,8 @@ module.exports = ( robot ) ->
                 msg.send "  #{ state_text }#{ issue.title } (\##{ issue.number }) [#{ estimate }] #{ issue.assignee?.login }"
 
             msg.send "  Total: #{ milestone_sum }h (#{ milestone_sum / 8 }d)"
-            for login, estimate_sum of assignee_sums
-              msg.send "    #{ login }: #{ estimate_sum }h"
+            for login, stats of assignees
+              msg.send "    #{ login }: #{ stats.count } issues [#{ stats.sum }h]"
             sum += milestone_sum
 
         catch ex
